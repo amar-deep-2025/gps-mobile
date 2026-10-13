@@ -34,7 +34,6 @@ export default function DashboardScreen() {
 
   const {
     loading: logoutLoading,
-    error: logoutError,
     submitLogout,
   } = useLogout();
 
@@ -90,7 +89,7 @@ export default function DashboardScreen() {
 
     Alert.alert(
       "Logout Failed",
-      logoutError ?? "Unable to log out. Please try again."
+      "Unable to log out. Please check your connection and try again."
     );
   }
 
@@ -112,6 +111,16 @@ export default function DashboardScreen() {
           <Text style={styles.title}>GPS Tracker</Text>
           <Text style={styles.subtitle}>Live Device Dashboard</Text>
         </View>
+
+        <TouchableOpacity
+          style={styles.deviceModelButton}
+          onPress={() => navigation.navigate("DeviceModel")}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.deviceModelButtonText}>
+            Add Model
+          </Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[
@@ -249,7 +258,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 20,
-    gap: 12,
+    gap: 8,
   },
   headerText: {
     flex: 1,
@@ -264,9 +273,20 @@ const styles = StyleSheet.create({
     color: "#64748B",
     marginTop: 6,
   },
+  deviceModelButton: {
+    backgroundColor: "#2563EB",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  deviceModelButtonText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "700",
+  },
   logoutButton: {
     backgroundColor: "#DC2626",
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 10,
   },
@@ -275,7 +295,7 @@ const styles = StyleSheet.create({
   },
   logoutButtonText: {
     color: "#FFFFFF",
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
   },
   center: {
