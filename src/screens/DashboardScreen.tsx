@@ -112,29 +112,40 @@ export default function DashboardScreen() {
           <Text style={styles.subtitle}>Live Device Dashboard</Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.deviceModelButton}
-          onPress={() => navigation.navigate("DeviceModel")}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.deviceModelButtonText}>
-            Add Model
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.actions}>
+          <TouchableOpacity
+            style={styles.deviceModelButton}
+            onPress={() => navigation.navigate("DeviceModel")}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.deviceModelButtonText}>
+              Add Model
+            </Text>
+          </TouchableOpacity>
+<TouchableOpacity
+  style={styles.viewModelButton}
+  onPress={() => navigation.navigate("DeviceModelList")}
+  activeOpacity={0.8}
+>
+  <Text style={styles.deviceModelButtonText}>
+    View All Models
+  </Text>
+</TouchableOpacity>
 
-        <TouchableOpacity
-          style={[
-            styles.logoutButton,
-            logoutLoading && styles.disabledButton,
-          ]}
-          onPress={handleLogout}
-          disabled={logoutLoading}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.logoutButtonText}>
-            {logoutLoading ? "Logging out..." : "Logout"}
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.logoutButton,
+              logoutLoading && styles.disabledButton,
+            ]}
+            onPress={handleLogout}
+            disabled={logoutLoading}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.logoutButtonText}>
+              {logoutLoading ? "Logging out..." : "Logout"}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading && !location && (
@@ -254,14 +265,10 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     marginBottom: 20,
-    gap: 8,
   },
   headerText: {
-    flex: 1,
+    marginBottom: 16,
   },
   title: {
     fontSize: 28,
@@ -273,9 +280,21 @@ const styles = StyleSheet.create({
     color: "#64748B",
     marginTop: 6,
   },
+  actions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
+    gap: 8,
+  },
   deviceModelButton: {
     backgroundColor: "#2563EB",
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  viewModelButton: {
+    backgroundColor: "#0F766E",
+    paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
   },
@@ -286,7 +305,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: "#DC2626",
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
   },
@@ -389,4 +408,3 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
-
