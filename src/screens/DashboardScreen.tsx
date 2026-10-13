@@ -1,24 +1,42 @@
-
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 
 import MapView, { Marker } from "react-native-maps";
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import { getLatestLocation } from "../services/Location/locationService";
 import type { Location } from "../types/Locations";
+import useLogout from "../hooks/auth/useLogout";
+import type { RootStackParamList } from "../navigation/AppNavigator";
+
+type DashboardNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  "Dashboard"
+>;
 
 const DEVICE_PUBLIC_ID = "7bdb6fbe-b26d-4dbf-b6eb-1ab6225dcfa3";
 
 export default function DashboardScreen() {
+  const navigation = useNavigation<DashboardNavigationProp>();
+
   const [location, setLocation] = useState<Location | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const {
+    loading: logoutLoading,
+    error: logoutError,
+    submitLogout,
+  } = useLogout();
 
   useEffect(() => {
     let isMounted = true;
@@ -32,7 +50,7 @@ export default function DashboardScreen() {
           setLocation(data);
           setError(null);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (isMounted) {
           setError(
             err instanceof Error
@@ -43,14 +61,12 @@ export default function DashboardScreen() {
       } finally {
         if (isMounted) {
           setLoading(false);
-
-          // Next request starts after the current request finishes.
           timeoutId = setTimeout(loadLocation, 10000);
         }
       }
     }
 
-    loadLocation();
+    void loadLocation();
 
     return () => {
       isMounted = false;
@@ -61,21 +77,56 @@ export default function DashboardScreen() {
     };
   }, []);
 
-  const formatTimestamp = (value: string) => {
+  async function handleLogout() {
+    const success = await submitLogout();
+
+    if (success) {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      });
+      return;
+    }
+
+    Alert.alert(
+      "Logout Failed",
+      logoutError ?? "Unable to log out. Please try again."
+    );
+  }
+
+  function formatTimestamp(value: string) {
     const date = new Date(value);
 
     return Number.isNaN(date.getTime())
       ? value
       : date.toLocaleString();
-  };
+  }
 
   return (
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
     >
-      <Text style={styles.title}>GPS Tracker</Text>
-      <Text style={styles.subtitle}>Live Device Dashboard</Text>
+      <View style={styles.header}>
+        <View style={styles.headerText}>
+          <Text style={styles.title}>GPS Tracker</Text>
+          <Text style={styles.subtitle}>Live Device Dashboard</Text>
+        </View>
+
+        <TouchableOpacity
+          style={[
+            styles.logoutButton,
+            logoutLoading && styles.disabledButton,
+          ]}
+          onPress={handleLogout}
+          disabled={logoutLoading}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.logoutButtonText}>
+            {logoutLoading ? "Logging out..." : "Logout"}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       {loading && !location && (
         <View style={styles.center}>
@@ -109,16 +160,20 @@ export default function DashboardScreen() {
                   longitude: location.longitude,
                 }}
                 title="GPS Tracker"
-                description={`Speed: ${location.speed ?? "Unavailable"} km/h`}
+                description={`Speed: ${
+                  location.speed ?? "Unavailable"
+                } km/h`}
               />
             </MapView>
           </View>
 
           <View style={styles.statusRow}>
             <View style={styles.statusDot} />
+
             <Text style={styles.statusText}>
               Latest location received
             </Text>
+
             {loading && (
               <ActivityIndicator size="small" color="#2563EB" />
             )}
@@ -128,7 +183,9 @@ export default function DashboardScreen() {
             <Text style={styles.cardTitle}>Device Information</Text>
 
             <Text style={styles.label}>Device Public ID</Text>
-            <Text style={styles.value}>{location.devicePublicId}</Text>
+            <Text style={styles.value}>
+              {location.devicePublicId}
+            </Text>
 
             <View style={styles.divider} />
 
@@ -187,6 +244,16 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingBottom: 32,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    gap: 12,
+  },
+  headerText: {
+    flex: 1,
+  },
   title: {
     fontSize: 28,
     fontWeight: "700",
@@ -196,7 +263,20 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#64748B",
     marginTop: 6,
-    marginBottom: 20,
+  },
+  logoutButton: {
+    backgroundColor: "#DC2626",
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  logoutButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "700",
   },
   center: {
     alignItems: "center",
@@ -289,3 +369,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 });
+

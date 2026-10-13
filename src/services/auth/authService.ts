@@ -125,7 +125,7 @@ export async function logoutUser(
     },
     body: JSON.stringify({
       refreshToken
-    });
+    })
   });
   const responseText=await response.text();
 
@@ -134,7 +134,7 @@ export async function logoutUser(
     try{
       const data: unknown=JSON.parse(responseText);
       if (typeof data==="string"){
-        message=data';
+        message=data;
       }else if(typeof data==="object" && data!=null && "message" in data && typeof data.message==="string"){
         message=data.message;
       }else{
