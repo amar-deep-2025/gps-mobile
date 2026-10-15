@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-import useDeviceModels from "../hooks/deviceModel/useDeviceModels";
+import useDeviceModels from "../hooks/useDeviceModels";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 
 type Props = NativeStackScreenProps<

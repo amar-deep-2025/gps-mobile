@@ -1,9 +1,9 @@
 
 import { useState } from "react";
 
-import { loginUser } from "../../services/auth/authService";
-import type { LoginRequest, LoginResponse } from "../../types/Auth";
-import { validation } from "../../utils/validation";
+import { loginUser } from "../services/auth/authService";
+import type { LoginRequest, LoginResponse } from "../types/Auth";
+import { validation } from "../utils/validation";
 
 export default function useLogin() {
   const [form, setForm] = useState<LoginRequest>({

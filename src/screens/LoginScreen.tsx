@@ -13,9 +13,15 @@ import {
 import * as SecureStore from "expo-secure-store";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import useLogin from "../hooks/auth/useLogin";
+import useLogin from "../hooks/useLogin";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 import LoginForm from "../components/auth/LoginForm";
+import {useDispatch} from "react-redux";
+import {loginSuccess} from "../store/authSlice";
+import type { AppDispatch } from "../store/store";
+
+
+
 
 type LoginNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
@@ -23,6 +29,7 @@ type LoginNavigationProp = NativeStackNavigationProp<
 >;
 
 export default function LoginScreen() {
+  const dispatch=useDispatch<AppDispatch>();
   const navigation = useNavigation<LoginNavigationProp>();
 
   const {
@@ -63,12 +70,21 @@ export default function LoginScreen() {
           loginData!.tokenType
         );
 
-        if (!cancelled) {
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "Dashboard" }],
-          });
+        if (cancelled) {
+          return;
+          
         }
+        dispatch(
+          loginSuccess({
+            accessToken:loginData!.accessToken,
+            refreshToken:loginData!.refreshToken,
+            publicId:loginData!.publicId,
+          })
+        );
+        navigation.reset({
+          index:0,
+          routes:[{name:"Dashboard"}],
+        });
       } catch {
         if (!cancelled) {
           Alert.alert(

@@ -7,7 +7,7 @@ import {
   View,
 } from "react-native";
 
-import { getDeviceModelById } from "../services/DeviceModel/deviceService";
+import { getDeviceModelById } from "../services/DeviceModel/DeviceModelService";
 import type { DeviceModel } from "../types/DeviceModel";
 
 const MODEL_ID = "0022d45a-403a-4b69-955b-1f4335c94534";

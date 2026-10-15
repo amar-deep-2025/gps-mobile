@@ -1,8 +1,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import { getDeviceModels } from "../../services/DeviceModel/deviceService";
-import type { DeviceModel } from "../../types/DeviceModel";
+import { getDeviceModels } from "../services/DeviceModel/DeviceModelService";
+import type { DeviceModel } from "../types/DeviceModel";
 
 export default function useDeviceModels() {
   const [models, setModels] = useState<DeviceModel[]>([]);

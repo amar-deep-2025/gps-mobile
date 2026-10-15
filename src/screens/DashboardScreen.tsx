@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,57 +15,111 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import { getLatestLocation } from "../services/Location/locationService";
+
+import { getAllDevices } from "../services/Device/DeviceService";
+
 import type { Location } from "../types/Locations";
-import useLogout from "../hooks/auth/useLogout";
+
+import type { Device } from "../types/Device";
+
 import type { RootStackParamList } from "../navigation/AppNavigator";
+
+import useLogout from "../hooks/useLogout";
 
 type DashboardNavigationProp = NativeStackNavigationProp<
   RootStackParamList,
   "Dashboard"
 >;
 
-const DEVICE_PUBLIC_ID = "7bdb6fbe-b26d-4dbf-b6eb-1ab6225dcfa3";
-
 export default function DashboardScreen() {
   const navigation = useNavigation<DashboardNavigationProp>();
 
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(
+    null
+  );
+
   const [location, setLocation] = useState<Location | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [devicesLoading, setDevicesLoading] = useState(true);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const {
-    loading: logoutLoading,
-    submitLogout,
-  } = useLogout();
+  const { loading: logoutLoading, submitLogout } = useLogout();
+
+  // Load devices belonging to the logged-in user.
+  const loadDevices = useCallback(async () => {
+    setDevicesLoading(true);
+    setError(null);
+
+    try {
+      const result = await getAllDevices();
+
+      setDevices(result);
+
+      setSelectedDeviceId((currentId) => {
+        if (currentId && result.some((device) => device.publicId === currentId)) {
+          return currentId;
+        }
+
+        return result[0]?.publicId ?? null;
+      });
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to load devices. Please try again."
+      );
+    } finally {
+      setDevicesLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
+    void loadDevices();
+  }, [loadDevices]);
+
+  // Fetch the selected device's latest location every 10 seconds.
+  useEffect(() => {
+    if (!selectedDeviceId) {
+      setLocation(null);
+      setLocationLoading(false);
+      return;
+    }
+
     let isMounted = true;
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     async function loadLocation() {
+      if (isMounted) {
+        setLocationLoading(true);
+        setError(null);
+      }
+
       try {
-        const data = await getLatestLocation(DEVICE_PUBLIC_ID);
+        const result = await getLatestLocation(selectedDeviceId!);
 
         if (isMounted) {
-          setLocation(data);
-          setError(null);
+          setLocation(result);
         }
       } catch (err: unknown) {
         if (isMounted) {
           setError(
             err instanceof Error
               ? err.message
-              : "Unable to fetch GPS location"
+              : "Unable to fetch GPS location."
           );
         }
       } finally {
         if (isMounted) {
-          setLoading(false);
-          timeoutId = setTimeout(loadLocation, 10000);
+          setLocationLoading(false);
+          timeoutId = setTimeout(() => {
+            void loadLocation();
+          }, 10000);
         }
       }
     }
 
+    setLocation(null);
     void loadLocation();
 
     return () => {
@@ -74,7 +129,7 @@ export default function DashboardScreen() {
         clearTimeout(timeoutId);
       }
     };
-  }, []);
+  }, [selectedDeviceId]);
 
   async function handleLogout() {
     const success = await submitLogout();
@@ -93,13 +148,21 @@ export default function DashboardScreen() {
     );
   }
 
-  function formatTimestamp(value: string) {
+  function formatTimestamp(value: string | null | undefined) {
+    if (!value) {
+      return "Unavailable";
+    }
+
     const date = new Date(value);
 
     return Number.isNaN(date.getTime())
       ? value
       : date.toLocaleString();
   }
+
+  const selectedDevice = devices.find(
+    (device) => device.publicId === selectedDeviceId
+  );
 
   return (
     <ScrollView
@@ -108,29 +171,26 @@ export default function DashboardScreen() {
     >
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <Text style={styles.title}>GPS Tracker</Text>
+          <Pressable onPress={()=>navigation.navigate("Home")}> <Text style={styles.title}>GPS Tracker</Text></Pressable>
           <Text style={styles.subtitle}>Live Device Dashboard</Text>
         </View>
 
         <View style={styles.actions}>
           <TouchableOpacity
-            style={styles.deviceModelButton}
-            onPress={() => navigation.navigate("DeviceModel")}
+            style={styles.addButton}
+            onPress={() => navigation.navigate("AddDevice")}
             activeOpacity={0.8}
           >
-            <Text style={styles.deviceModelButtonText}>
-              Add Model
-            </Text>
+            <Text style={styles.buttonText}>+ Add Device</Text>
           </TouchableOpacity>
-<TouchableOpacity
-  style={styles.viewModelButton}
-  onPress={() => navigation.navigate("DeviceModelList")}
-  activeOpacity={0.8}
->
-  <Text style={styles.deviceModelButtonText}>
-    View All Models
-  </Text>
-</TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.listButton}
+            onPress={() => navigation.navigate("DeviceList")}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>My Devices</Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[
@@ -141,24 +201,98 @@ export default function DashboardScreen() {
             disabled={logoutLoading}
             activeOpacity={0.8}
           >
-            <Text style={styles.logoutButtonText}>
+            <Text style={styles.buttonText}>
               {logoutLoading ? "Logging out..." : "Logout"}
             </Text>
           </TouchableOpacity>
         </View>
       </View>
 
-      {loading && !location && (
+      {/* Device selector */}
+      <View style={styles.card}>
+        <Text style={styles.cardTitle}>Select Device</Text>
+
+        {devicesLoading ? (
+          <ActivityIndicator size="small" color="#2563EB" />
+        ) : devices.length === 0 ? (
+          <Text style={styles.muted}>
+            No devices registered yet. Add your first GPS device.
+          </Text>
+        ) : (
+          <View style={styles.deviceOptions}>
+            {devices.map((device) => {
+              const isSelected = device.publicId === selectedDeviceId;
+
+              return (
+                <TouchableOpacity
+                  key={device.publicId}
+                  style={[
+                    styles.deviceOption,
+                    isSelected && styles.selectedDeviceOption,
+                  ]}
+                  onPress={() => setSelectedDeviceId(device.publicId)}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.deviceOptionTitle,
+                      isSelected && styles.selectedDeviceText,
+                    ]}
+                  >
+                    {device.deviceName}
+                  </Text>
+
+                  <Text
+                    style={[
+                      styles.deviceOptionSubtitle,
+                      isSelected && styles.selectedDeviceText,
+                    ]}
+                  >
+                    {device.status}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+      </View>
+
+      {error && (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorTitle}>Unable to load data</Text>
+          <Text style={styles.error}>{error}</Text>
+
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={() => {
+              if (devices.length === 0) {
+                void loadDevices();
+              } else if (selectedDeviceId) {
+                setSelectedDeviceId(null);
+                setTimeout(() => {
+                  setSelectedDeviceId(selectedDeviceId);
+                }, 0);
+              }
+            }}
+          >
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {!devicesLoading && devices.length > 0 && locationLoading && !location && (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#2563EB" />
           <Text style={styles.muted}>Fetching device location...</Text>
         </View>
       )}
 
-      {error && (
-        <View style={styles.errorBox}>
-          <Text style={styles.errorTitle}>Location Error</Text>
-          <Text style={styles.error}>{error}</Text>
+      {!devicesLoading && devices.length > 0 && !location && !locationLoading && !error && (
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Location Unavailable</Text>
+          <Text style={styles.muted}>
+            No location has been received for this device yet.
+          </Text>
         </View>
       )}
 
@@ -179,7 +313,7 @@ export default function DashboardScreen() {
                   latitude: location.latitude,
                   longitude: location.longitude,
                 }}
-                title="GPS Tracker"
+                title={selectedDevice?.deviceName ?? "GPS Tracker"}
                 description={`Speed: ${
                   location.speed ?? "Unavailable"
                 } km/h`}
@@ -194,7 +328,7 @@ export default function DashboardScreen() {
               Latest location received
             </Text>
 
-            {loading && (
+            {locationLoading && (
               <ActivityIndicator size="small" color="#2563EB" />
             )}
           </View>
@@ -202,9 +336,19 @@ export default function DashboardScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Device Information</Text>
 
+            <Text style={styles.label}>Device Name</Text>
+            <Text style={styles.value}>
+              {selectedDevice?.deviceName ?? "Unavailable"}
+            </Text>
+
             <Text style={styles.label}>Device Public ID</Text>
             <Text style={styles.value}>
               {location.devicePublicId}
+            </Text>
+
+            <Text style={styles.label}>Device Status</Text>
+            <Text style={styles.value}>
+              {selectedDevice?.status ?? "Unavailable"}
             </Text>
 
             <View style={styles.divider} />
@@ -246,10 +390,6 @@ export default function DashboardScreen() {
           </View>
         </>
       )}
-
-      {!loading && !error && !location && (
-        <Text style={styles.muted}>No location available.</Text>
-      )}
     </ScrollView>
   );
 }
@@ -286,22 +426,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  deviceModelButton: {
+  addButton: {
     backgroundColor: "#2563EB",
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
   },
-  viewModelButton: {
+  listButton: {
     backgroundColor: "#0F766E",
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 10,
-  },
-  deviceModelButtonText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "700",
   },
   logoutButton: {
     backgroundColor: "#DC2626",
@@ -309,13 +444,52 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
   },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  logoutButtonText: {
+  buttonText: {
     color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "700",
+  },
+  disabledButton: {
+    opacity: 0.6,
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#172554",
+    marginBottom: 12,
+  },
+  deviceOptions: {
+    gap: 10,
+  },
+  deviceOption: {
+    padding: 14,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    backgroundColor: "#FFFFFF",
+  },
+  selectedDeviceOption: {
+    backgroundColor: "#2563EB",
+    borderColor: "#2563EB",
+  },
+  deviceOptionTitle: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#1E293B",
+  },
+  deviceOptionSubtitle: {
+    fontSize: 12,
+    color: "#64748B",
+    marginTop: 4,
+  },
+  selectedDeviceText: {
+    color: "#FFFFFF",
   },
   center: {
     alignItems: "center",
@@ -351,18 +525,6 @@ const styles = StyleSheet.create({
     color: "#166534",
     fontSize: 13,
     flex: 1,
-  },
-  card: {
-    backgroundColor: "#FFFFFF",
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 16,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#172554",
-    marginBottom: 12,
   },
   label: {
     color: "#64748B",
@@ -406,5 +568,17 @@ const styles = StyleSheet.create({
   error: {
     color: "#DC2626",
     fontSize: 14,
+  },
+  retryButton: {
+    alignSelf: "flex-start",
+    marginTop: 12,
+    backgroundColor: "#DC2626",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
   },
 });

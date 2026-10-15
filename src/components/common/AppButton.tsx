@@ -1,16 +1,20 @@
-
+import React from "react";
 import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
   TouchableOpacity,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  ViewStyle,
+  TextStyle,
 } from "react-native";
 
-interface Props {
+interface AppButtonProps {
   title: string;
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
+  buttonStyle?: ViewStyle;
+  textStyle?: TextStyle;
 }
 
 export default function AppButton({
@@ -18,21 +22,26 @@ export default function AppButton({
   onPress,
   loading = false,
   disabled = false,
-}: Props) {
+  buttonStyle,
+  textStyle,
+}: AppButtonProps) {
+  const isDisabled = disabled || loading;
+
   return (
     <TouchableOpacity
       style={[
         styles.button,
-        (loading || disabled) && styles.disabled,
+        isDisabled && styles.disabledButton,
+        buttonStyle,
       ]}
       onPress={onPress}
-      disabled={loading || disabled}
+      disabled={isDisabled}
       activeOpacity={0.8}
     >
       {loading ? (
         <ActivityIndicator color="#FFFFFF" />
       ) : (
-        <Text style={styles.text}>{title}</Text>
+        <Text style={[styles.buttonText, textStyle]}>{title}</Text>
       )}
     </TouchableOpacity>
   );
@@ -40,19 +49,20 @@ export default function AppButton({
 
 const styles = StyleSheet.create({
   button: {
-    height: 50,
-    borderRadius: 10,
     backgroundColor: "#2563EB",
-    justifyContent: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 10,
     alignItems: "center",
-    marginTop: 14,
+    justifyContent: "center",
+    minHeight: 50,
   },
-  disabled: {
-    opacity: 0.65,
-  },
-  text: {
+  buttonText: {
     color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: "700",
+    fontWeight: "600",
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
 });

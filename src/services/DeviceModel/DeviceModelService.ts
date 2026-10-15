@@ -6,16 +6,16 @@ import type {
   DeviceModel,
 } from "../../types/DeviceModel";
 
-const DEVICE_BASE_URL =
-  process.env.EXPO_PUBLIC_DEVICE_SERVICE_URL;
+const DEVICE_MODEL_BASE_URL =
+  process.env.EXPO_PUBLIC_DEVICE_MODELS_SERVICE_URL;
 
-if (!DEVICE_BASE_URL) {
+if (!DEVICE_MODEL_BASE_URL) {
   throw new Error(
     "EXPO_PUBLIC_DEVICE_SERVICE_URL is not configured in .env"
   );
 }
 
-// Create a new device model
+
 export async function createDeviceModel(
   request: CreateDeviceModelRequest
 ): Promise<unknown> {
@@ -28,7 +28,7 @@ export async function createDeviceModel(
     );
   }
 
-  const response = await fetch(DEVICE_BASE_URL, {
+  const response = await fetch(DEVICE_MODEL_BASE_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -62,7 +62,7 @@ export async function createDeviceModel(
   return data;
 }
 
-// Get all device models
+
 export async function getDeviceModels(): Promise<DeviceModel[]> {
   const accessToken =
     await SecureStore.getItemAsync("accessToken");
@@ -73,7 +73,7 @@ export async function getDeviceModels(): Promise<DeviceModel[]> {
     );
   }
 
-  const response = await fetch(DEVICE_BASE_URL, {
+  const response = await fetch(DEVICE_MODEL_BASE_URL, {
     method: "GET",
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -107,8 +107,6 @@ export async function getDeviceModels(): Promise<DeviceModel[]> {
 
   return data as DeviceModel[];
 }
-
-// Get a single device model by its public ID
 export async function getDeviceModelById(
   modelId: string
 ): Promise<DeviceModel> {
@@ -122,7 +120,7 @@ export async function getDeviceModelById(
   }
 
   const response = await fetch(
-    `${DEVICE_BASE_URL}/${encodeURIComponent(modelId)}`,
+    `${DEVICE_MODEL_BASE_URL}/${encodeURIComponent(modelId)}`,
     {
       method: "GET",
       headers: {

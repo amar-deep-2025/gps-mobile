@@ -9,7 +9,7 @@ import {
 
 import DeviceModelForm from "../components/DeviceModel/DeviceModelForm";
 
-import useDeviceModel from "../hooks/deviceModel/useDeviceModel";
+import useDeviceModel from "../hooks/useDeviceModel";
 
 export default function DeviceModelScreen() {
   const {

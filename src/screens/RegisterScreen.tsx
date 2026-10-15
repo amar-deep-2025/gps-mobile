@@ -12,7 +12,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 import RegisterForm from "../components/auth/RegisterForm";
-import useRegister from "../hooks/auth/useRegister";
+import useRegister from "../hooks/useRegister";
 import type { RootStackParamList } from "../navigation/AppNavigator";
 
 type RegisterNavigationProp = NativeStackNavigationProp<

@@ -1,8 +1,8 @@
 
 import { useState } from "react";
-import { registerUser } from "../../services/auth/authService";
-import type { RegisterRequest } from "../../types/Auth";
-import { validation } from "../../utils/validation";
+import { registerUser } from "../services/auth/authService";
+import type { RegisterRequest } from "../types/Auth";
+import { validation } from "../utils/validation";
 
 export default function useRegister() {
   const [form, setForm] = useState<RegisterRequest>({
@@ -29,18 +29,22 @@ export default function useRegister() {
     setSuccess(null);
   }
 
-  function validateForm(): string | null {
-    return (
-      validation.required(form.name, "Name") ??
-      validation.maxLength(form.name, 50, "Name") ??
-      validation.required(form.email, "Email") ??
-      validation.email(form.email) ??
-      validation.maxLength(form.email, 100, "Email") ??
-      validation.required(form.password, "Password") ??
-      validation.passwordLength(form.password) ??
-      validation.required(form.phone, "Phone number")
-    );
-  }
+
+function validateForm(): string | null {
+  return (
+    validation.name(form.name) ??
+    validation.maxLength(form.name, 50, "Name") ??
+
+    validation.required(form.email, "Email") ??
+    validation.email(form.email) ??
+    validation.maxLength(form.email, 100, "Email") ??
+
+    validation.required(form.password, "Password") ??
+    validation.passwordLength(form.password) ??
+
+    validation.phone(form.phone)
+  );
+}
 
   async function submitRegister(): Promise<boolean> {
     if (loading) {

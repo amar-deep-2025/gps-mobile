@@ -7,7 +7,7 @@ const AUTH_BASE_URL = process.env.EXPO_PUBLIC_AUTH_SERVICE_URL;
 
 if (!AUTH_BASE_URL) {
   throw new Error(
-    "EXPO_PUBLIC_AUTH_SERVICE_URL is not configured in .env"
+    "PUBLIC_AUTH_SERVICE_URL is not configured in .env"
   );
 }
 

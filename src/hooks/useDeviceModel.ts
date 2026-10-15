@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import {createDeviceModel} from "../../services/DeviceModel/deviceService";
+import {createDeviceModel } from "../services/DeviceModel/DeviceModelService";
 
-import type { CreateDeviceModelRequest } from "../../types/DeviceModel";
+import type { CreateDeviceModelRequest } from "../types/DeviceModel";
 
 const initialForm: CreateDeviceModelRequest = {
   manufacturer: "",
